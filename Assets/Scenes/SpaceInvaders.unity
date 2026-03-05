@@ -2059,8 +2059,8 @@ MonoBehaviour:
   rightBoundary: 8
   leftBoundary: -8
   enemyBulletPrefab: {fileID: 2496179257648400138, guid: 833bdf24675894e4999dcf3959ccb667, type: 3}
-  minFireInterval: 5
-  maxFireInterval: 8
+  minFireInterval: 0.1
+  maxFireInterval: 1.5
 --- !u!4 &923970408
 Transform:
   m_ObjectHideFlags: 0
