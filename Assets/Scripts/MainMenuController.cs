@@ -1,16 +1,16 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Attach to a GameObject in the MainMenu scene.
-/// Handles the Start and Quit buttons.
-/// The idle enemy animations on the main menu are handled automatically
-/// by the Animator components on the enemy display GameObjects.
+/// Handles Start / Quit buttons and Enter key shortcut.
+/// Falls back to direct scene load if SceneController isn't present.
 /// </summary>
 public class MainMenuController : MonoBehaviour
 {
-    [Header("Optional — keyboard shortcut to start")]
-    [SerializeField] private bool allowEnterToStart = true;
+    [SerializeField] private string mainGameScene    = "MainGame";
+    [SerializeField] private bool   allowEnterToStart = true;
 
     private void Update()
     {
@@ -20,20 +20,27 @@ public class MainMenuController : MonoBehaviour
             OnStartButton();
     }
 
-    // Wire to Start Button's OnClick()
+    // Wire to Start Button OnClick()
     public void OnStartButton()
     {
         if (SceneController.Instance != null)
             SceneController.Instance.GoToMainGame();
         else
-            // Fallback if SceneController not present
-            UnityEngine.SceneManagement.SceneManager.LoadScene("MainGame");
+            SceneManager.LoadScene(mainGameScene);  // fallback
     }
 
-    // Wire to Quit Button's OnClick()
+    // Wire to Quit Button OnClick()
     public void OnQuitButton()
     {
         if (SceneController.Instance != null)
             SceneController.Instance.QuitGame();
+        else
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
     }
 }
