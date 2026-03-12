@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Manages the enemy grid in 3D space with orthographic-style 2D movement.
-/// All movement is on the XY plane — Z is always locked to 0.
-/// Attach to an empty GameObject at position (0, 0, 0).
+/// Updated for Part 2:
+/// - Notifies EnemyAnimator on each discrete step (synchronized animation)
+/// - Notifies EnemyAnimator on each enemy shoot
+/// - Triggers scene transition when all enemies are defeated
 /// </summary>
 public class EnemyFormation : MonoBehaviour
 {
     [Header("Formation Setup")]
-    [SerializeField] private GameObject[] enemyPrefabs;  // 0=TypeA, 1=TypeB, 2=TypeC
+    [SerializeField] private GameObject[] enemyPrefabs;
     [SerializeField] private int   columns     = 11;
     [SerializeField] private int   rows        = 5;
     [SerializeField] private float spacingX    = 1.4f;
@@ -28,11 +29,11 @@ public class EnemyFormation : MonoBehaviour
     [SerializeField] private float minFireInterval = 1.5f;
     [SerializeField] private float maxFireInterval = 3.5f;
 
-    private List<Enemy> activeEnemies    = new List<Enemy>();
+    private List<Enemy> activeEnemies   = new List<Enemy>();
     private int         totalEnemies;
     private float       currentStepInterval;
-    private int         moveDirection    = 1;  // 1=right, -1=left
-    private bool        needsToDescend   = false;
+    private int         moveDirection   = 1;
+    private bool        needsToDescend  = false;
 
     private void OnEnable()  { Enemy.OnEnemyDied += HandleEnemyDied; }
     private void OnDisable() { Enemy.OnEnemyDied -= HandleEnemyDied; }
@@ -47,26 +48,21 @@ public class EnemyFormation : MonoBehaviour
 
     private void SpawnFormation()
     {
-        // Row 0 = TypeA (30pts), rows 1-2 = TypeB (20pts), rows 3-4 = TypeC (10pts)
         int[] prefabIndexByRow = { 0, 1, 1, 2, 2 };
-
         for (int row = 0; row < rows; row++)
         {
             int prefabIdx = prefabIndexByRow[Mathf.Clamp(row, 0, prefabIndexByRow.Length - 1)];
             for (int col = 0; col < columns; col++)
             {
-                float x = transform.position.x + (col - columns / 2) * spacingX;
-                float y = transform.position.y - row * spacingY;
-
-                // Z = 0 — keep everything on the XY plane
+                float x   = transform.position.x + (col - columns / 2) * spacingX;
+                float y   = transform.position.y - row * spacingY;
                 Vector3 pos = new Vector3(x, y, 0f);
 
-                GameObject go = Instantiate(enemyPrefabs[prefabIdx], pos, Quaternion.identity, transform);
-                Enemy enemy   = go.GetComponent<Enemy>();
+                GameObject go    = Instantiate(enemyPrefabs[prefabIdx], pos, Quaternion.identity, transform);
+                Enemy      enemy = go.GetComponent<Enemy>();
                 if (enemy != null) activeEnemies.Add(enemy);
             }
         }
-
         totalEnemies = activeEnemies.Count;
     }
 
@@ -91,8 +87,20 @@ public class EnemyFormation : MonoBehaviour
                 CheckBoundary();
             }
 
-            pos.z              = 0f;  // always enforce Z = 0
+            pos.z              = 0f;
             transform.position = pos;
+
+            // Notify all enemies of step — syncs idle animation
+            NotifyAllEnemiesStep();
+        }
+    }
+
+    private void NotifyAllEnemiesStep()
+    {
+        foreach (Enemy e in activeEnemies)
+        {
+            if (e == null) continue;
+            e.GetComponent<EnemyAnimator>()?.NotifyStep();
         }
     }
 
@@ -111,8 +119,13 @@ public class EnemyFormation : MonoBehaviour
     {
         activeEnemies.Remove(enemy);
         UpdateSpeed();
+
         if (activeEnemies.Count == 0)
+        {
             GameManager.Instance?.NotifyAllEnemiesDefeated();
+            // Transition to Credits
+            SceneController.Instance?.GoToCredits();
+        }
     }
 
     private void UpdateSpeed()
@@ -132,10 +145,12 @@ public class EnemyFormation : MonoBehaviour
             int idx = Random.Range(0, activeEnemies.Count);
             if (activeEnemies[idx] != null)
             {
-                // Spawn bullet at enemy position, Z = 0
                 Vector3 firePos = activeEnemies[idx].transform.position;
                 firePos.z = 0f;
                 Instantiate(enemyBulletPrefab, firePos, Quaternion.identity);
+
+                // Notify that enemy it just shot
+                activeEnemies[idx].GetComponent<EnemyAnimator>()?.NotifyShoot();
             }
         }
     }

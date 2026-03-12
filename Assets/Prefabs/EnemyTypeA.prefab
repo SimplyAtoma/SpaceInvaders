@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 7035227763675065878}
   - component: {fileID: 9083568033216582423}
   - component: {fileID: -9152162152177975230}
+  - component: {fileID: -6255072656407833403}
+  - component: {fileID: -3892962621586651681}
   m_Layer: 0
   m_Name: EnemyTypeA
   m_TagString: Enemy
@@ -108,6 +110,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   enemyType: 30
   mysteryBonusScore: 30
+  explodeAnimDuration: 0.4
 --- !u!54 &9083568033216582423
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -156,3 +159,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.56, y: 0.56, z: 0.2}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!95 &-6255072656407833403
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2997334616106322420}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: d0188044d3eb1ef49a2ea69f24bbe9cd, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-3892962621586651681
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2997334616106322420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0252557751faff34b8e04a387d10e4e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimator

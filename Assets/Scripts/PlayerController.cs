@@ -2,11 +2,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// 3D Player controller using the new Unity Input System.
-/// Attach to a GameObject with:
-///   - Rigidbody (Freeze Z pos, Freeze all rotation, Use Gravity = off)
-///   - BoxCollider (Is Trigger = true)
-/// Controls: A/D or Arrow keys to move, Space to shoot. Gamepad supported.
+/// Part 2 update:
+/// - Plays shoot SFX via AudioManager on each shot
+/// - Triggers scene transition (Credits) on death
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -23,12 +21,13 @@ public class PlayerController : MonoBehaviour
     private float     nextFireTime = 0f;
     private bool      isDead       = false;
     private Rigidbody rb;
-
     private Keyboard  kb;
     private Gamepad   gp;
 
     private void Awake()
     {
+        transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
         rb = GetComponent<Rigidbody>();
         rb.useGravity  = false;
         rb.constraints = RigidbodyConstraints.FreezePositionZ
@@ -54,13 +53,11 @@ public class PlayerController : MonoBehaviour
     private void HandleMovement()
     {
         float input = 0f;
-
         if (kb != null)
         {
             if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)  input = -1f;
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) input =  1f;
         }
-
         if (gp != null)
         {
             float stickX = gp.leftStick.x.ReadValue();
@@ -85,14 +82,15 @@ public class PlayerController : MonoBehaviour
 
             if (bulletPrefab == null)
             {
-                Debug.LogError("PlayerController: bulletPrefab is null! " +
-                    "Drag the bullet PREFAB (from the Project window) " +
-                    "into this field — not a scene object.", this);
+                Debug.LogError("PlayerController: bulletPrefab is null! Assign the prefab from the Project window.", this);
                 return;
             }
 
             Transform spawnPoint = firePoint != null ? firePoint : transform;
             Instantiate(bulletPrefab, spawnPoint.position, Quaternion.identity);
+
+            // Play shoot sound
+            AudioManager.Instance?.PlayPlayerShoot();
         }
     }
 
@@ -106,7 +104,20 @@ public class PlayerController : MonoBehaviour
     private void Die()
     {
         isDead = true;
+
+        // Play explosion sound
+        AudioManager.Instance?.PlayPlayerExplode();
+
         GameManager.Instance?.NotifyPlayerDied();
+
+        // Go to credits after a short delay so explode anim can play
+        StartCoroutine(DelayedSceneChange());
+    }
+
+    private System.Collections.IEnumerator DelayedSceneChange()
+    {
+        yield return new WaitForSeconds(0.6f);
+        SceneController.Instance?.GoToCredits();
         gameObject.SetActive(false);
     }
 }
